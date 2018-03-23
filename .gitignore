@@ -1,5 +1,8 @@
 api_keys.json
 geckodriver.log
 /data
-
+.idea
+__pycache__/
+*.json
+*.csv
 

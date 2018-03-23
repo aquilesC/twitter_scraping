@@ -7,28 +7,27 @@ import datetime
 
 
 # edit these three variables
-user = 'realdonaldtrump'
-start = datetime.datetime(2010, 1, 1)  # year, month, day
-end = datetime.datetime(2016, 12, 7)  # year, month, day
+user = 'mauriciomacri'
+start = datetime.datetime(2018, 1, 1)  # year, month, day
+end = datetime.datetime(2018, 3, 22)  # year, month, day
 
 # only edit these if you're having problems
 delay = 1  # time to wait on each page load before reading the page
-driver = webdriver.Safari()  # options are Chrome() Firefox() Safari()
-
 
 # don't mess with this stuff
 twitter_ids_filename = 'all_ids.json'
 days = (end - start).days + 1
 id_selector = '.time a.tweet-timestamp'
-tweet_selector = 'li.js-stream-item'
+
 user = user.lower()
 ids = []
 
+
+
+
 def format_day(date):
-    day = '0' + str(date.day) if len(str(date.day)) == 1 else str(date.day)
-    month = '0' + str(date.month) if len(str(date.month)) == 1 else str(date.month)
-    year = str(date.year)
-    return '-'.join([year, month, day])
+    return "{}-{:02}-{:02}".format(date.year, date.month, date.day)
+
 
 def form_url(since, until):
     p1 = 'https://twitter.com/search?f=tweets&vertical=default&q=from%3A'
@@ -38,15 +37,10 @@ def form_url(since, until):
 def increment_day(date, i):
     return date + datetime.timedelta(days=i)
 
-for day in range(days):
-    d1 = format_day(increment_day(start, 0))
-    d2 = format_day(increment_day(start, 1))
-    url = form_url(d1, d2)
-    print(url)
-    print(d1)
+
+def get_tweets(driver, url):
     driver.get(url)
     sleep(delay)
-
     try:
         found_tweets = driver.find_elements_by_css_selector(tweet_selector)
         increment = 10
@@ -66,9 +60,19 @@ for day in range(days):
                 ids.append(id)
             except StaleElementReferenceException as e:
                 print('lost element reference', tweet)
-
+        return ids
     except NoSuchElementException:
         print('no tweets on this day')
+
+driver = webdriver.Firefox()
+
+for day in range(days):
+    d1 = format_day(increment_day(start, 0))
+    d2 = format_day(increment_day(start, 1))
+    url = form_url(d1, d2)
+    print(url)
+    print(d1)
+    get_tweets(driver, url)
 
     start = increment_day(start, 1)
 
@@ -79,6 +83,7 @@ try:
         data_to_write = list(set(all_ids))
         print('tweets found on this scrape: ', len(ids))
         print('total tweet count: ', len(data_to_write))
+
 except FileNotFoundError:
     with open(twitter_ids_filename, 'w') as f:
         all_ids = ids
@@ -90,4 +95,4 @@ with open(twitter_ids_filename, 'w') as outfile:
     json.dump(data_to_write, outfile)
 
 print('all done here')
-driver.close()
+
